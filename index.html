@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Rekkiroikunta – 2 min</title>
+<style>
+  :root {
+    --bg: #0e1116;
+    --card: #171c24;
+    --text: #f2f5f9;
+    --muted: #8b97a8;
+    --accent: #38bdf8;
+    --prep: #f59e0b;
+    --done: #22c55e;
+    --ring: #2a3340;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 20px 16px calc(20px + env(safe-area-inset-bottom));
+    gap: 18px;
+    -webkit-user-select: none;
+    user-select: none;
+    transition: background-color .25s ease;
+  }
+  body.flash-mile { background: #14342a; }
+  body.flash-final { background: #1d3a1d; }
+
+  h1 {
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin: 0;
+    text-align: center;
+  }
+
+  .timer {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum";
+    font-size: clamp(64px, 26vw, 170px);
+    font-weight: 700;
+    line-height: 1;
+    letter-spacing: -0.03em;
+    margin: 0;
+    transition: color .2s ease, transform .15s ease;
+  }
+  .timer.prep { color: var(--prep); }
+  .timer.run { color: var(--text); }
+  .timer.done { color: var(--done); }
+  .timer.pulse { transform: scale(1.06); }
+
+  .status {
+    font-size: 18px;
+    font-weight: 600;
+    min-height: 26px;
+    color: var(--accent);
+    text-align: center;
+  }
+
+  .bar {
+    width: min(560px, 100%);
+    height: 26px;
+    background: var(--card);
+    border: 1px solid var(--ring);
+    border-radius: 13px;
+    position: relative;
+    overflow: hidden;
+  }
+  .fill {
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: 0;
+    background: linear-gradient(90deg, #0ea5e9, #22c55e);
+    border-radius: 13px 0 0 13px;
+  }
+  .tick {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: rgba(255,255,255,.28);
+  }
+  .tick span {
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    margin-top: 6px;
+    font-size: 12px;
+    color: var(--muted);
+    white-space: nowrap;
+  }
+  .bar-wrap { width: min(560px, 100%); padding-bottom: 24px; }
+
+  .buttons {
+    display: flex;
+    gap: 12px;
+    width: min(560px, 100%);
+  }
+  button {
+    flex: 1;
+    padding: 22px 12px;
+    font-size: 20px;
+    font-weight: 700;
+    border-radius: 16px;
+    border: 1px solid var(--ring);
+    background: var(--card);
+    color: var(--text);
+    cursor: pointer;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+  button:active { transform: scale(.98); }
+  #startBtn { background: var(--accent); border-color: var(--accent); color: #06121b; flex: 2; }
+  #startBtn.running { background: #ef4444; border-color: #ef4444; color: #fff; }
+
+  .splits {
+    width: min(560px, 100%);
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+  }
+  .split {
+    background: var(--card);
+    border: 1px solid var(--ring);
+    border-radius: 12px;
+    padding: 10px 4px;
+    text-align: center;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--muted);
+    transition: all .2s ease;
+  }
+  .split.hit {
+    background: #14532d;
+    border-color: var(--done);
+    color: #dcfce7;
+  }
+  .hint { font-size: 13px; color: var(--muted); text-align: center; max-width: 560px; }
+</style>
+</head>
+<body>
+
+<h1>Rekkiroikunta – tavoite 2:00</h1>
+
+<p class="timer prep" id="display">-0:15</p>
+<div class="status" id="status">Paina KÄYNNISTÄ</div>
+
+<div class="bar-wrap">
+  <div class="bar">
+    <div class="fill" id="fill"></div>
+    <div class="tick" style="left:12.5%"><span>0:15</span></div>
+    <div class="tick" style="left:50%"><span>1:00</span></div>
+    <div class="tick" style="left:75%"><span>1:30</span></div>
+  </div>
+</div>
+
+<div class="splits">
+  <div class="split" id="s15">0:15</div>
+  <div class="split" id="s60">1:00</div>
+  <div class="split" id="s90">1:30</div>
+  <div class="split" id="s120">2:00</div>
+</div>
+
+<div class="buttons">
+  <button id="startBtn">KÄYNNISTÄ</button>
+  <button id="resetBtn">NOLLAA</button>
+</div>
+
+<p class="hint">Ajastin alkaa -15 sekunnista, jotta ehdit ottaa tangosta kiinni. Näyttö pysyy hereillä ajon aikana.</p>
+
+<script>
+(function () {
+  "use strict";
+
+  var PREP = 15;          // sekuntia valmistautumiseen
+  var GOAL = 120;         // tavoiteaika sekunteina
+  var TOTAL = PREP + GOAL;
+
+  var display = document.getElementById("display");
+  var statusEl = document.getElementById("status");
+  var fill = document.getElementById("fill");
+  var startBtn = document.getElementById("startBtn");
+  var resetBtn = document.getElementById("resetBtn");
+  var splits = { 15: document.getElementById("s15"), 60: document.getElementById("s60"),
+                 90: document.getElementById("s90"), 120: document.getElementById("s120") };
+
+  var running = false;
+  var startStamp = 0;     // performance.now() kun viimeksi käynnistettiin
+  var accumulated = 0;    // ms kertynyttä aikaa ennen nykyistä jaksoa
+  var rafId = null;
+  var lastWholeSecond = null;
+  var wakeLock = null;
+
+  // ---------- Ääni (Web Audio, ei ulkoisia tiedostoja) ----------
+  var ctx = null;
+  function audio() {
+    if (!ctx) {
+      var AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return null;
+      ctx = new AC();
+    }
+    if (ctx.state === "suspended") ctx.resume();
+    return ctx;
+  }
+
+  function beep(freq, duration, when, volume, type) {
+    var ac = audio();
+    if (!ac) return;
+    var t0 = ac.currentTime + (when || 0);
+    var osc = ac.createOscillator();
+    var gain = ac.createGain();
+    osc.type = type || "sine";
+    osc.frequency.setValueAtTime(freq, t0);
+    gain.gain.setValueAtTime(0.0001, t0);
+    gain.gain.exponentialRampToValueAtTime(volume || 0.3, t0 + 0.01);
+    gain.gain.exponentialRampToValueAtTime(0.0001, t0 + duration);
+    osc.connect(gain).connect(ac.destination);
+    osc.start(t0);
+    osc.stop(t0 + duration + 0.05);
+  }
+
+  function chord(freqs, duration, volume) {
+    freqs.forEach(function (f, i) { beep(f, duration, i * 0.12, volume || 0.25, "triangle"); });
+  }
+
+  function applause(seconds) {
+    var ac = audio();
+    if (!ac) return;
+    var len = Math.floor(ac.sampleRate * seconds);
+    var buf = ac.createBuffer(1, len, ac.sampleRate);
+    var data = buf.getChannelData(0);
+    // Taustakohina + yksittäiset "läpsäykset"
+    for (var i = 0; i < len; i++) data[i] = (Math.random() * 2 - 1) * 0.12;
+    var claps = Math.floor(seconds * 55);
+    for (var c = 0; c < claps; c++) {
+      var pos = Math.floor(Math.random() * (len - 1200));
+      var amp = 0.35 + Math.random() * 0.5;
+      for (var j = 0; j < 1200; j++) {
+        var env = Math.exp(-j / 160);
+        data[pos + j] += (Math.random() * 2 - 1) * amp * env;
+      }
+    }
+    // Hiipuva loppu
+    var fadeStart = Math.floor(len * 0.65);
+    for (var k = fadeStart; k < len; k++) data[k] *= 1 - (k - fadeStart) / (len - fadeStart);
+
+    var src = ac.createBufferSource();
+    src.buffer = buf;
+    var bp = ac.createBiquadFilter();
+    bp.type = "bandpass";
+    bp.frequency.value = 1800;
+    bp.Q.value = 0.7;
+    var gain = ac.createGain();
+    gain.gain.value = 0.5;
+    src.connect(bp).connect(gain).connect(ac.destination);
+    src.start();
+
+    // Päälle pieni fanfaari
+    chord([523.25, 659.25, 783.99, 1046.5], 0.9, 0.22);
+  }
+
+  function say(text) {
+    if (!("speechSynthesis" in window)) return;
+    try {
+      var u = new SpeechSynthesisUtterance(text);
+      u.lang = "fi-FI";
+      u.rate = 1.05;
+      window.speechSynthesis.speak(u);
+    } catch (e) { /* ei väliä */ }
+  }
+
+  function buzz(pattern) {
+    if (navigator.vibrate) { try { navigator.vibrate(pattern); } catch (e) {} }
+  }
+
+  // ---------- Näyttö ----------
+  function fmt(sec) {
+    var neg = sec < 0;
+    var s = Math.abs(sec);
+    var m = Math.floor(s / 60);
+    var r = s % 60;
+    return (neg ? "-" : "") + m + ":" + (r < 10 ? "0" : "") + r;
+  }
+
+  function flash(cls, ms) {
+    document.body.classList.add(cls);
+    display.classList.add("pulse");
+    setTimeout(function () {
+      document.body.classList.remove(cls);
+      display.classList.remove("pulse");
+    }, ms);
+  }
+
+  function setStatus(text, color) {
+    statusEl.textContent = text;
+    statusEl.style.color = color || "var(--accent)";
+  }
+
+  // ---------- Virstanpylväät ----------
+  function onSecond(sec) {
+    if (sec < 0) {
+      if (sec >= -3) { beep(660, 0.12, 0, 0.3); buzz(40); }
+      setStatus("Valmistaudu – ota kiinni tangosta!", "var(--prep)");
+      return;
+    }
+    if (sec === 0) {
+      beep(880, 0.35, 0, 0.35, "square");
+      buzz([60, 40, 120]);
+      setStatus("Roiku! Aika juoksee.", "var(--accent)");
+      return;
+    }
+    if (sec === 15) {
+      splits[15].classList.add("hit");
+      flash("flash-mile", 900);
+      chord([659.25, 880], 0.5, 0.3);
+      buzz([80, 60, 80]);
+      setStatus("15 SEKUNTIA! Hyvä ote.", "var(--done)");
+      say("Viisitoista sekuntia");
+      return;
+    }
+    if (sec === 60) {
+      splits[60].classList.add("hit");
+      flash("flash-mile", 1200);
+      chord([523.25, 659.25, 783.99], 0.6, 0.3);
+      buzz([100, 60, 100, 60, 100]);
+      setStatus("1 MINUUTTI! Puolivälissä.", "var(--done)");
+      say("Yksi minuutti");
+      return;
+    }
+    if (sec === 90) {
+      splits[90].classList.add("hit");
+      flash("flash-mile", 1200);
+      chord([587.33, 739.99, 880], 0.6, 0.32);
+      buzz([120, 60, 120, 60, 120]);
+      setStatus("1:30 – enää 30 sekuntia!", "var(--done)");
+      say("Puolitoista minuuttia, enää kolmekymmentä sekuntia");
+      return;
+    }
+    if (sec % 15 === 0 && sec < 120) {
+      // Muut 15 sekunnin välit (0:30, 0:45, 1:15, 1:45) – sama huomioääni kuin lähdössä
+      beep(880, 0.35, 0, 0.35, "square");
+      buzz([60, 40, 120]);
+      display.classList.add("pulse");
+      setTimeout(function () { display.classList.remove("pulse"); }, 400);
+      setStatus(fmt(sec) + " – jatka! " + (120 - sec) + " s jäljellä.", "var(--accent)");
+      return;
+    }
+    if (sec >= 115 && sec < 120) {
+      beep(760, 0.1, 0, 0.25);
+      setStatus("Loppukiri – " + (120 - sec) + " s jäljellä!", "var(--prep)");
+      return;
+    }
+    if (sec === 120) {
+      splits[120].classList.add("hit");
+      flash("flash-final", 3000);
+      applause(5);
+      buzz([200, 80, 200, 80, 400]);
+      setStatus("2 MINUUTTIA – TAVOITE SAAVUTETTU! 👏", "var(--done)");
+      say("Kaksi minuuttia. Tavoite saavutettu!");
+      return;
+    }
+    if (sec > 120) {
+      setStatus("Bonusaikaa: +" + (sec - 120) + " s 💪", "var(--done)");
+      return;
+    }
+    setStatus("Roiku! " + (120 - sec) + " s jäljellä.", "var(--accent)");
+  }
+
+  function elapsedMs() {
+    return accumulated + (running ? performance.now() - startStamp : 0);
+  }
+
+  function render() {
+    var ms = elapsedMs();
+    var shown = Math.floor(ms / 1000) - PREP;       // näytettävä aika sekunteina
+    var whole = Math.floor(ms / 1000);
+
+    display.textContent = fmt(shown);
+    display.className = "timer " + (shown < 0 ? "prep" : (shown >= GOAL ? "done" : "run"));
+
+    var pct = Math.max(0, Math.min(1, (ms / 1000 - PREP) / GOAL));
+    fill.style.width = (pct * 100) + "%";
+
+    if (lastWholeSecond === null || whole !== lastWholeSecond) {
+      // Käy läpi kaikki ohitetut sekunnit, jotta yksikään merkki ei jää väliin
+      var from = lastWholeSecond === null ? whole : lastWholeSecond + 1;
+      for (var s = from; s <= whole; s++) onSecond(s - PREP);
+      lastWholeSecond = whole;
+    }
+
+    if (running) rafId = requestAnimationFrame(render);
+  }
+
+  // ---------- Näytön hereillä pito ----------
+  async function requestWakeLock() {
+    try {
+      if ("wakeLock" in navigator) wakeLock = await navigator.wakeLock.request("screen");
+    } catch (e) { /* ei tuettu */ }
+  }
+  function releaseWakeLock() {
+    if (wakeLock) { try { wakeLock.release(); } catch (e) {} wakeLock = null; }
+  }
+  document.addEventListener("visibilitychange", function () {
+    if (document.visibilityState === "visible" && running) requestWakeLock();
+  });
+
+  // ---------- Ohjaus ----------
+  function start() {
+    audio(); // avaa äänen käyttäjän eleellä
+    running = true;
+    startStamp = performance.now();
+    startBtn.textContent = "PYSÄYTÄ";
+    startBtn.classList.add("running");
+    requestWakeLock();
+    rafId = requestAnimationFrame(render);
+  }
+
+  function stop() {
+    if (!running) return;
+    accumulated += performance.now() - startStamp;
+    running = false;
+    if (rafId) cancelAnimationFrame(rafId);
+    startBtn.textContent = "JATKA";
+    startBtn.classList.remove("running");
+    releaseWakeLock();
+    var shown = Math.floor(accumulated / 1000) - PREP;
+    setStatus(shown >= 0 ? "Pysäytetty – tulos " + fmt(shown) : "Pysäytetty", "var(--muted)");
+    render();
+  }
+
+  function reset() {
+    running = false;
+    if (rafId) cancelAnimationFrame(rafId);
+    accumulated = 0;
+    lastWholeSecond = null;
+    releaseWakeLock();
+    if ("speechSynthesis" in window) window.speechSynthesis.cancel();
+    startBtn.textContent = "KÄYNNISTÄ";
+    startBtn.classList.remove("running");
+    display.textContent = fmt(-PREP);
+    display.className = "timer prep";
+    fill.style.width = "0%";
+    setStatus("Paina KÄYNNISTÄ");
+    Object.keys(splits).forEach(function (k) { splits[k].classList.remove("hit"); });
+  }
+
+  startBtn.addEventListener("click", function () { running ? stop() : start(); });
+  resetBtn.addEventListener("click", reset);
+
+  // Välilyönti = käynnistä/pysäytä, R = nollaa
+  document.addEventListener("keydown", function (e) {
+    if (e.code === "Space") { e.preventDefault(); running ? stop() : start(); }
+    if (e.key === "r" || e.key === "R") reset();
+  });
+
+  reset();
+})();
+</script>
+</body>
+</html>
