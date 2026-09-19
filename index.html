@@ -62,12 +62,18 @@
     margin-bottom: 10px;
   }
   .goals {
-    display: flex;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
     gap: 8px;
+  }
+  @media (min-width: 380px) {
+    .goals { grid-template-columns: repeat(3, 1fr); }
+  }
+  @media (min-width: 620px) {
+    .goals { grid-template-columns: repeat(6, 1fr); }
   }
   /* Kohotettu "painike"-ulkoasu, jotta valinta erottuu klikattavaksi */
   .goal {
-    flex: 1;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -177,11 +183,13 @@
 
   .splits {
     width: min(560px, 100%);
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(62px, 1fr));
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
     gap: 8px;
   }
   .split {
+    flex: 0 0 calc(25% - 6px);
     background: var(--card);
     border: 1px solid var(--ring);
     border-radius: 12px;
@@ -194,6 +202,9 @@
     transition: all .2s ease;
   }
   .split.goal-chip { border-color: var(--accent); color: var(--accent); }
+  @media (min-width: 480px) {
+    .split { flex: 0 0 calc(16.666% - 7px); }
+  }
   .split.hit {
     background: #14532d;
     border-color: var(--done);
@@ -260,7 +271,7 @@
   "use strict";
 
   var PREP = 15;                       // sekuntia valmistautumiseen
-  var GOALS = [30, 60, 90, 120];       // valittavat tavoiteajat
+  var GOALS = [30, 60, 90, 120, 150, 180];  // valittavat tavoiteajat
   var COUNTDOWN = 5;                   // loppulaskennan pituus sekunteina
   var goal = 120;
 
@@ -421,8 +432,11 @@
       30: "kolmekymmentä sekuntia",
       45: "neljäkymmentäviisi sekuntia",
       60: "yksi minuutti",
+      75: "minuutti ja viisitoista sekuntia",
       90: "puolitoista minuuttia",
-      120: "kaksi minuuttia"
+      120: "kaksi minuuttia",
+      150: "kaksi ja puoli minuuttia",
+      180: "kolme minuuttia"
     };
     return words[sec] || (sec + " sekuntia");
   }
