@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Rekkiroikunta – 2 min</title>
+<title>Rekkiroikunta</title>
 <style>
   :root {
     --bg: #0e1116;
@@ -27,7 +27,7 @@
     align-items: center;
     justify-content: center;
     padding: 20px 16px calc(20px + env(safe-area-inset-bottom));
-    gap: 18px;
+    gap: 16px;
     -webkit-user-select: none;
     user-select: none;
     transition: background-color .25s ease;
@@ -45,10 +45,83 @@
     text-align: center;
   }
 
+  .goal-picker {
+    width: min(560px, 100%);
+    background: rgba(255,255,255,.03);
+    border: 1px solid var(--ring);
+    border-radius: 18px;
+    padding: 12px;
+  }
+  .goal-label {
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    text-align: center;
+    margin-bottom: 10px;
+  }
+  .goals {
+    display: flex;
+    gap: 8px;
+  }
+  /* Kohotettu "painike"-ulkoasu, jotta valinta erottuu klikattavaksi */
+  .goal {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 14px 4px;
+    font-size: 17px;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    border-radius: 14px;
+    border: 2px solid #3d4a5d;
+    background: linear-gradient(180deg, #273140, #1c242f);
+    color: #dbe3ee;
+    box-shadow: 0 3px 0 #0a0d12;
+    cursor: pointer;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    transition: transform .08s ease, box-shadow .08s ease, background .15s ease,
+                border-color .15s ease, color .15s ease;
+  }
+  .goal::before {
+    content: "";
+    width: 13px;
+    height: 13px;
+    flex: none;
+    border-radius: 50%;
+    border: 2px solid #6b7a8f;
+    background: transparent;
+  }
+  .goal.active {
+    background: linear-gradient(180deg, #4cc8fb, #23a9e4);
+    border-color: #7fdcff;
+    color: #06121b;
+    box-shadow: 0 3px 0 #0a4f6d;
+  }
+  .goal.active::before {
+    border-color: #06121b;
+    background: #06121b;
+    box-shadow: inset 0 0 0 2px #7fdcff;
+  }
+  .goal:active { transform: translateY(3px); box-shadow: none; }
+  .goal:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+  .goal:disabled { opacity: .35; cursor: not-allowed; box-shadow: none; transform: none; }
+  @media (hover: hover) {
+    .goal:not(.active):not(:disabled):hover {
+      border-color: var(--accent);
+      color: #fff;
+      background: linear-gradient(180deg, #2f3c4e, #222c39);
+    }
+  }
+
   .timer {
     font-variant-numeric: tabular-nums;
     font-feature-settings: "tnum";
-    font-size: clamp(64px, 26vw, 170px);
+    font-size: clamp(60px, 24vw, 160px);
     font-weight: 700;
     line-height: 1;
     letter-spacing: -0.03em;
@@ -68,8 +141,8 @@
     text-align: center;
   }
 
+  .bar-wrap { width: min(560px, 100%); padding-bottom: 24px; }
   .bar {
-    width: min(560px, 100%);
     height: 26px;
     background: var(--card);
     border: 1px solid var(--ring);
@@ -82,15 +155,15 @@
     inset: 0 auto 0 0;
     width: 0;
     background: linear-gradient(90deg, #0ea5e9, #22c55e);
-    border-radius: 13px 0 0 13px;
   }
   .tick {
     position: absolute;
     top: 0;
     bottom: 0;
     width: 2px;
-    background: rgba(255,255,255,.28);
+    background: rgba(255,255,255,.25);
   }
+  .tick.half { width: 3px; background: rgba(255,255,255,.6); }
   .tick span {
     position: absolute;
     top: 100%;
@@ -101,14 +174,38 @@
     color: var(--muted);
     white-space: nowrap;
   }
-  .bar-wrap { width: min(560px, 100%); padding-bottom: 24px; }
+
+  .splits {
+    width: min(560px, 100%);
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(62px, 1fr));
+    gap: 8px;
+  }
+  .split {
+    background: var(--card);
+    border: 1px solid var(--ring);
+    border-radius: 12px;
+    padding: 9px 2px;
+    text-align: center;
+    font-size: 14px;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    color: var(--muted);
+    transition: all .2s ease;
+  }
+  .split.goal-chip { border-color: var(--accent); color: var(--accent); }
+  .split.hit {
+    background: #14532d;
+    border-color: var(--done);
+    color: #dcfce7;
+  }
 
   .buttons {
     display: flex;
     gap: 12px;
     width: min(560px, 100%);
   }
-  button {
+  .buttons button {
     flex: 1;
     padding: 22px 12px;
     font-size: 20px;
@@ -120,39 +217,24 @@
     cursor: pointer;
     touch-action: manipulation;
     -webkit-tap-highlight-color: transparent;
+    box-shadow: 0 3px 0 #0a0d12;
+    transition: transform .08s ease, box-shadow .08s ease;
   }
-  button:active { transform: scale(.98); }
-  #startBtn { background: var(--accent); border-color: var(--accent); color: #06121b; flex: 2; }
-  #startBtn.running { background: #ef4444; border-color: #ef4444; color: #fff; }
+  .buttons button:active { transform: translateY(3px); box-shadow: none; }
+  #startBtn { background: var(--accent); border-color: var(--accent); color: #06121b; flex: 2; box-shadow: 0 3px 0 #0a4f6d; }
+  #startBtn.running { background: #ef4444; border-color: #ef4444; color: #fff; box-shadow: 0 3px 0 #7f1d1d; }
 
-  .splits {
-    width: min(560px, 100%);
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 8px;
-  }
-  .split {
-    background: var(--card);
-    border: 1px solid var(--ring);
-    border-radius: 12px;
-    padding: 10px 4px;
-    text-align: center;
-    font-size: 14px;
-    font-weight: 600;
-    color: var(--muted);
-    transition: all .2s ease;
-  }
-  .split.hit {
-    background: #14532d;
-    border-color: var(--done);
-    color: #dcfce7;
-  }
-  .hint { font-size: 13px; color: var(--muted); text-align: center; max-width: 560px; }
+  .hint { font-size: 13px; color: var(--muted); text-align: center; max-width: 560px; margin: 0; }
 </style>
 </head>
 <body>
 
-<h1>Rekkiroikunta – tavoite 2:00</h1>
+<h1 id="heading">Rekkiroikunta – tavoite 2:00</h1>
+
+<div class="goal-picker">
+  <div class="goal-label" id="goalLabel">Valitse tavoiteaika</div>
+  <div class="goals" id="goals"></div>
+</div>
 
 <p class="timer prep" id="display">-0:15</p>
 <div class="status" id="status">Paina KÄYNNISTÄ</div>
@@ -160,41 +242,41 @@
 <div class="bar-wrap">
   <div class="bar">
     <div class="fill" id="fill"></div>
-    <div class="tick" style="left:12.5%"><span>0:15</span></div>
-    <div class="tick" style="left:50%"><span>1:00</span></div>
-    <div class="tick" style="left:75%"><span>1:30</span></div>
+    <div id="ticks"></div>
   </div>
 </div>
 
-<div class="splits">
-  <div class="split" id="s15">0:15</div>
-  <div class="split" id="s60">1:00</div>
-  <div class="split" id="s90">1:30</div>
-  <div class="split" id="s120">2:00</div>
-</div>
+<div class="splits" id="splits"></div>
 
 <div class="buttons">
   <button id="startBtn">KÄYNNISTÄ</button>
   <button id="resetBtn">NOLLAA</button>
 </div>
 
-<p class="hint">Ajastin alkaa -15 sekunnista, jotta ehdit ottaa tangosta kiinni. Näyttö pysyy hereillä ajon aikana.</p>
+<p class="hint">Ajastin alkaa -15 sekunnista, jotta ehdit ottaa tangosta kiinni. Huomioääni 15 sekunnin välein, puheviesti puolivälissä ja viimeiset 5 sekuntia lasketaan alas.</p>
 
 <script>
 (function () {
   "use strict";
 
-  var PREP = 15;          // sekuntia valmistautumiseen
-  var GOAL = 120;         // tavoiteaika sekunteina
-  var TOTAL = PREP + GOAL;
+  var PREP = 15;                       // sekuntia valmistautumiseen
+  var GOALS = [30, 60, 90, 120];       // valittavat tavoiteajat
+  var COUNTDOWN = 5;                   // loppulaskennan pituus sekunteina
+  var goal = 120;
 
+  var heading = document.getElementById("heading");
+  var goalsEl = document.getElementById("goals");
+  var goalLabel = document.getElementById("goalLabel");
   var display = document.getElementById("display");
   var statusEl = document.getElementById("status");
   var fill = document.getElementById("fill");
+  var ticksEl = document.getElementById("ticks");
+  var splitsEl = document.getElementById("splits");
   var startBtn = document.getElementById("startBtn");
   var resetBtn = document.getElementById("resetBtn");
-  var splits = { 15: document.getElementById("s15"), 60: document.getElementById("s60"),
-                 90: document.getElementById("s90"), 120: document.getElementById("s120") };
+
+  var goalBtns = {};
+  var splitEls = {};
 
   var running = false;
   var startStamp = 0;     // performance.now() kun viimeksi käynnistettiin
@@ -202,6 +284,9 @@
   var rafId = null;
   var lastWholeSecond = null;
   var wakeLock = null;
+
+  // Puoliväli-puheviesti vain 1:00, 1:30 ja 2:00 tavoitteille
+  function halfwayPoint() { return goal >= 60 ? goal / 2 : null; }
 
   // ---------- Ääni (Web Audio, ei ulkoisia tiedostoja) ----------
   var ctx = null;
@@ -233,6 +318,12 @@
 
   function chord(freqs, duration, volume) {
     freqs.forEach(function (f, i) { beep(f, duration, i * 0.12, volume || 0.25, "triangle"); });
+  }
+
+  // Sama huomioääni kuin lähdössä
+  function markSound() {
+    beep(880, 0.35, 0, 0.35, "square");
+    buzz([60, 40, 120]);
   }
 
   function applause(seconds) {
@@ -271,13 +362,44 @@
     chord([523.25, 659.25, 783.99, 1046.5], 0.9, 0.22);
   }
 
+  // iOS vaatii, että puhe käynnistetään ensimmäisen kerran käyttäjän eleestä.
+  // Siksi "herätetään" syntetisaattori äänettömällä lausumalla start-napissa.
+  var speechPrimed = false;
+  var fiVoice = null;
+
+  function pickVoice() {
+    if (!("speechSynthesis" in window)) return;
+    var voices = window.speechSynthesis.getVoices() || [];
+    fiVoice = voices.filter(function (v) { return /^fi/i.test(v.lang); })[0] || null;
+  }
+  if ("speechSynthesis" in window) {
+    pickVoice();
+    window.speechSynthesis.addEventListener("voiceschanged", pickVoice);
+  }
+
+  function primeSpeech() {
+    if (speechPrimed || !("speechSynthesis" in window)) return;
+    try {
+      var u = new SpeechSynthesisUtterance(" ");
+      u.volume = 0;
+      u.lang = "fi-FI";
+      window.speechSynthesis.speak(u);
+      speechPrimed = true;
+      pickVoice();
+    } catch (e) { /* ei väliä */ }
+  }
+
   function say(text) {
     if (!("speechSynthesis" in window)) return;
     try {
+      var synth = window.speechSynthesis;
+      if (synth.paused) synth.resume();
       var u = new SpeechSynthesisUtterance(text);
       u.lang = "fi-FI";
+      if (fiVoice) u.voice = fiVoice;
       u.rate = 1.05;
-      window.speechSynthesis.speak(u);
+      u.volume = 1;
+      synth.speak(u);
     } catch (e) { /* ei väliä */ }
   }
 
@@ -294,6 +416,22 @@
     return (neg ? "-" : "") + m + ":" + (r < 10 ? "0" : "") + r;
   }
 
+  function spoken(sec) {
+    var words = {
+      30: "kolmekymmentä sekuntia",
+      45: "neljäkymmentäviisi sekuntia",
+      60: "yksi minuutti",
+      90: "puolitoista minuuttia",
+      120: "kaksi minuuttia"
+    };
+    return words[sec] || (sec + " sekuntia");
+  }
+
+  function pulse() {
+    display.classList.add("pulse");
+    setTimeout(function () { display.classList.remove("pulse"); }, 400);
+  }
+
   function flash(cls, ms) {
     document.body.classList.add(cls);
     display.classList.add("pulse");
@@ -308,74 +446,128 @@
     statusEl.style.color = color || "var(--accent)";
   }
 
+  // ---------- Tavoitteen mukaan rakennettavat osat ----------
+  function marks() {
+    var out = [];
+    for (var s = 15; s < goal; s += 15) out.push(s);
+    out.push(goal);
+    return out;
+  }
+
+  function buildGoalButtons() {
+    goalsEl.innerHTML = "";
+    goalBtns = {};
+    GOALS.forEach(function (g) {
+      var b = document.createElement("button");
+      b.type = "button";
+      b.className = "goal" + (g === goal ? " active" : "");
+      b.setAttribute("aria-pressed", g === goal ? "true" : "false");
+      b.appendChild(document.createTextNode(fmt(g)));
+      b.addEventListener("click", function () { selectGoal(g); });
+      goalsEl.appendChild(b);
+      goalBtns[g] = b;
+    });
+  }
+
+  function buildTicksAndSplits() {
+    var half = halfwayPoint();
+
+    ticksEl.innerHTML = "";
+    marks().forEach(function (m) {
+      if (m >= goal) return;
+      var t = document.createElement("div");
+      t.className = "tick" + (m === half ? " half" : "");
+      t.style.left = (m / goal * 100) + "%";
+      if (m === half) {
+        var lbl = document.createElement("span");
+        lbl.textContent = fmt(m) + " · puoliväli";
+        t.appendChild(lbl);
+      }
+      ticksEl.appendChild(t);
+    });
+
+    splitsEl.innerHTML = "";
+    splitEls = {};
+    marks().forEach(function (m) {
+      var d = document.createElement("div");
+      d.className = "split" + (m === goal ? " goal-chip" : "");
+      d.textContent = fmt(m);
+      splitsEl.appendChild(d);
+      splitEls[m] = d;
+    });
+  }
+
+  function selectGoal(g) {
+    if (g === goal) { reset(); return; }
+    goal = g;
+    try { localStorage.setItem("rekki-goal", String(g)); } catch (e) {}
+    Object.keys(goalBtns).forEach(function (k) {
+      var on = Number(k) === goal;
+      goalBtns[k].classList.toggle("active", on);
+      goalBtns[k].setAttribute("aria-pressed", on ? "true" : "false");
+    });
+    heading.textContent = "Rekkiroikunta – tavoite " + fmt(goal);
+    buildTicksAndSplits();
+    reset();
+  }
+
+  function lockGoals(locked) {
+    GOALS.forEach(function (g) { goalBtns[g].disabled = locked; });
+    goalLabel.textContent = locked ? "Tavoiteaika lukittu ajon ajaksi"
+                                   : "Valitse tavoiteaika";
+  }
+
   // ---------- Virstanpylväät ----------
   function onSecond(sec) {
+    var half = halfwayPoint();
+
     if (sec < 0) {
       if (sec >= -3) { beep(660, 0.12, 0, 0.3); buzz(40); }
       setStatus("Valmistaudu – ota kiinni tangosta!", "var(--prep)");
       return;
     }
     if (sec === 0) {
-      beep(880, 0.35, 0, 0.35, "square");
-      buzz([60, 40, 120]);
+      markSound();
       setStatus("Roiku! Aika juoksee.", "var(--accent)");
       return;
     }
-    if (sec === 15) {
-      splits[15].classList.add("hit");
-      flash("flash-mile", 900);
-      chord([659.25, 880], 0.5, 0.3);
-      buzz([80, 60, 80]);
-      setStatus("15 SEKUNTIA! Hyvä ote.", "var(--done)");
-      say("Viisitoista sekuntia");
-      return;
-    }
-    if (sec === 60) {
-      splits[60].classList.add("hit");
-      flash("flash-mile", 1200);
-      chord([523.25, 659.25, 783.99], 0.6, 0.3);
-      buzz([100, 60, 100, 60, 100]);
-      setStatus("1 MINUUTTI! Puolivälissä.", "var(--done)");
-      say("Yksi minuutti");
-      return;
-    }
-    if (sec === 90) {
-      splits[90].classList.add("hit");
-      flash("flash-mile", 1200);
-      chord([587.33, 739.99, 880], 0.6, 0.32);
-      buzz([120, 60, 120, 60, 120]);
-      setStatus("1:30 – enää 30 sekuntia!", "var(--done)");
-      say("Puolitoista minuuttia, enää kolmekymmentä sekuntia");
-      return;
-    }
-    if (sec % 15 === 0 && sec < 120) {
-      // Muut 15 sekunnin välit (0:30, 0:45, 1:15, 1:45) – sama huomioääni kuin lähdössä
-      beep(880, 0.35, 0, 0.35, "square");
-      buzz([60, 40, 120]);
-      display.classList.add("pulse");
-      setTimeout(function () { display.classList.remove("pulse"); }, 400);
-      setStatus(fmt(sec) + " – jatka! " + (120 - sec) + " s jäljellä.", "var(--accent)");
-      return;
-    }
-    if (sec >= 115 && sec < 120) {
-      beep(760, 0.1, 0, 0.25);
-      setStatus("Loppukiri – " + (120 - sec) + " s jäljellä!", "var(--prep)");
-      return;
-    }
-    if (sec === 120) {
-      splits[120].classList.add("hit");
+    if (sec === goal) {
+      if (splitEls[goal]) splitEls[goal].classList.add("hit");
       flash("flash-final", 3000);
       applause(5);
       buzz([200, 80, 200, 80, 400]);
-      setStatus("2 MINUUTTIA – TAVOITE SAAVUTETTU! 👏", "var(--done)");
-      say("Kaksi minuuttia. Tavoite saavutettu!");
+      setStatus(fmt(goal) + " – TAVOITE SAAVUTETTU! 👏", "var(--done)");
+      say("Tavoite saavutettu! " + spoken(goal));
       return;
     }
-    if (sec > 120) {
-      setStatus("Bonusaikaa: +" + (sec - 120) + " s 💪", "var(--done)");
+    if (sec > goal) {
+      setStatus("Bonusaikaa: +" + (sec - goal) + " s 💪", "var(--done)");
       return;
     }
-    setStatus("Roiku! " + (120 - sec) + " s jäljellä.", "var(--accent)");
+    if (sec >= goal - COUNTDOWN) {
+      // Viimeiset 5 sekuntia: piippaava countdown
+      beep(1046.5, 0.12, 0, 0.32, "square");
+      buzz(50);
+      setStatus("Loppukiri – " + (goal - sec) + " s jäljellä!", "var(--prep)");
+      return;
+    }
+    if (sec === half) {
+      if (splitEls[sec]) splitEls[sec].classList.add("hit");
+      flash("flash-mile", 1200);
+      markSound();
+      chord([523.25, 659.25, 783.99], 0.6, 0.28);
+      setStatus("PUOLIVÄLI – " + fmt(sec) + " kulunut!", "var(--done)");
+      say("Puoliväli. " + spoken(sec) + " kulunut.");
+      return;
+    }
+    if (sec % 15 === 0) {
+      if (splitEls[sec]) splitEls[sec].classList.add("hit");
+      markSound();
+      pulse();
+      setStatus(fmt(sec) + " – jatka! " + (goal - sec) + " s jäljellä.", "var(--accent)");
+      return;
+    }
+    setStatus("Roiku! " + (goal - sec) + " s jäljellä.", "var(--accent)");
   }
 
   function elapsedMs() {
@@ -388,9 +580,9 @@
     var whole = Math.floor(ms / 1000);
 
     display.textContent = fmt(shown);
-    display.className = "timer " + (shown < 0 ? "prep" : (shown >= GOAL ? "done" : "run"));
+    display.className = "timer " + (shown < 0 ? "prep" : (shown >= goal ? "done" : "run"));
 
-    var pct = Math.max(0, Math.min(1, (ms / 1000 - PREP) / GOAL));
+    var pct = Math.max(0, Math.min(1, (ms / 1000 - PREP) / goal));
     fill.style.width = (pct * 100) + "%";
 
     if (lastWholeSecond === null || whole !== lastWholeSecond) {
@@ -418,11 +610,13 @@
 
   // ---------- Ohjaus ----------
   function start() {
-    audio(); // avaa äänen käyttäjän eleellä
+    audio();        // avaa äänen käyttäjän eleellä
+    primeSpeech();  // avaa puhesynteesin (pakollinen iOS:ssä)
     running = true;
     startStamp = performance.now();
     startBtn.textContent = "PYSÄYTÄ";
     startBtn.classList.add("running");
+    lockGoals(true);
     requestWakeLock();
     rafId = requestAnimationFrame(render);
   }
@@ -434,6 +628,7 @@
     if (rafId) cancelAnimationFrame(rafId);
     startBtn.textContent = "JATKA";
     startBtn.classList.remove("running");
+    lockGoals(false);
     releaseWakeLock();
     var shown = Math.floor(accumulated / 1000) - PREP;
     setStatus(shown >= 0 ? "Pysäytetty – tulos " + fmt(shown) : "Pysäytetty", "var(--muted)");
@@ -445,6 +640,7 @@
     if (rafId) cancelAnimationFrame(rafId);
     accumulated = 0;
     lastWholeSecond = null;
+    lockGoals(false);
     releaseWakeLock();
     if ("speechSynthesis" in window) window.speechSynthesis.cancel();
     startBtn.textContent = "KÄYNNISTÄ";
@@ -453,18 +649,28 @@
     display.className = "timer prep";
     fill.style.width = "0%";
     setStatus("Paina KÄYNNISTÄ");
-    Object.keys(splits).forEach(function (k) { splits[k].classList.remove("hit"); });
+    Object.keys(splitEls).forEach(function (k) { splitEls[k].classList.remove("hit"); });
   }
 
   startBtn.addEventListener("click", function () { running ? stop() : start(); });
   resetBtn.addEventListener("click", reset);
 
-  // Välilyönti = käynnistä/pysäytä, R = nollaa
+  // Välilyönti = käynnistä/pysäytä, R = nollaa, 1–4 = tavoiteaika
   document.addEventListener("keydown", function (e) {
     if (e.code === "Space") { e.preventDefault(); running ? stop() : start(); }
     if (e.key === "r" || e.key === "R") reset();
+    var n = Number(e.key);
+    if (n >= 1 && n <= GOALS.length && !running) selectGoal(GOALS[n - 1]);
   });
 
+  // ---------- Käynnistys ----------
+  try {
+    var saved = Number(localStorage.getItem("rekki-goal"));
+    if (GOALS.indexOf(saved) !== -1) goal = saved;
+  } catch (e) {}
+  heading.textContent = "Rekkiroikunta – tavoite " + fmt(goal);
+  buildGoalButtons();
+  buildTicksAndSplits();
   reset();
 })();
 </script>

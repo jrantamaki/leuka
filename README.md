@@ -1,6 +1,6 @@
 # Rekkiroikunta-ajastin
 
-Yksinkertainen ajastin rekkitangossa roikkumisen harjoitteluun. Tavoite: 2 minuuttia.
+Yksinkertainen ajastin rekkitangossa roikkumisen harjoitteluun. Valittavat tavoiteajat: 0:30, 1:00, 1:30 ja 2:00.
 
 ## Käyttö
 
@@ -20,17 +20,17 @@ ja avaa puhelimen selaimessa `http://<koneen-ip>:8000`.
 
 ## Toiminta
 
+Valitse ensin tavoiteaika yläreunan painikkeista: **0:30, 1:00, 1:30 tai 2:00**. Valinta jää muistiin selaimeen.
+
 - Ajastin alkaa **-0:15**, jotta ehdit ottaa tangosta kiinni (3 viimeistä sekuntia piippaavat).
-- **0:00** – piippaus, aika alkaa juosta.
-- **0:15** – korostettu välähdys + merkkiääni + puhe.
-- **Jokainen 15 sekunnin väli** (0:30, 0:45, 1:15, 1:45) – sama huomioääni kuin lähdössä.
-- **1:00** – korostettu välähdys + sointu.
-- **1:30** – korostettu välähdys + sointu ("enää 30 sekuntia").
-- **1:55–1:59** – loppukirin laskenta.
-- **2:00** – aplodit + fanfaari + vihreä välähdys. Ajastin jatkaa bonusaikaa.
+- **0:00** – huomioääni, aika alkaa juosta.
+- **Joka 15. sekunti** – sama huomioääni.
+- **Puolivälissä** – puheviesti ("Puoliväli, …") ja korostettu välähdys. Vain tavoitteilla 1:00, 1:30 ja 2:00.
+- **Viimeiset 5 sekuntia** – piippaava loppulaskenta.
+- **Tavoiteaika** – aplodit + fanfaari + vihreä välähdys. Ajastin jatkaa bonusaikaa.
 
 Napit: **KÄYNNISTÄ / PYSÄYTÄ / JATKA** ja **NOLLAA**.
-Näppäimistöllä: `välilyönti` = käynnistä/pysäytä, `R` = nollaa.
+Näppäimistöllä: `välilyönti` = käynnistä/pysäytä, `R` = nollaa, `1`–`4` = tavoiteaika.
 
 Kaikki äänet tehdään selaimessa Web Audio APIlla, joten mukana ei ole äänitiedostoja.
 Näyttö pidetään hereillä (Wake Lock) ajon aikana, jos selain tukee sitä.
